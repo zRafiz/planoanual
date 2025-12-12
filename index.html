@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bíblia - Planos de Leitura</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body class="dark">
+  <!-- TOPBAR -->
+  <header class="topbar hidden">
+    <div class="brand">
+      <!-- botão hamburguer (fica escondido no CSS, mantido só por causa do JS existente) -->
+      <button id="menuToggle" class="ghost-btn menu-toggle" aria-label="Abrir menu">
+        ☰
+      </button>
+
+      <span class="logo">📘</span>
+      <span class="title">Planos de Leitura</span>
+    </div>
+
+    <!-- NAV DESKTOP -->
+    <nav class="nav">
+      <button class="nav-btn active" data-view="home">Início</button>
+      <button class="nav-btn" data-view="plan">Plano</button>
+      <button class="nav-btn" data-view="stats">Estatísticas</button>
+      <button class="nav-btn" data-view="achievements">Conquistas</button>
+      <button class="nav-btn" data-view="settings">Configurações</button>
+    </nav>
+
+    <div class="user-area">
+      <span id="userName" class="muted"></span>
+      <button id="logoutBtn" class="ghost-btn">Sair</button>
+    </div>
+  </header>
+
+  <!-- backdrop antigo (deixado aqui para não quebrar JS, mas escondido no CSS) -->
+  <div id="menuBackdrop" class="menu-backdrop"></div>
+
+  <!-- TOASTS -->
+  <div id="toastHost" class="toast-host"></div>
+
+  <!-- AUTH -->
+  <section id="authView" class="auth">
+    <div class="auth-card">
+      <div id="loginPanel">
+        <h1>Entrar</h1>
+        <div class="field">
+          <label>Login</label>
+          <input id="loginEmail" type="text" placeholder="Seu email ou login"/>
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <input id="loginPass" type="password" placeholder="••••••"/>
+        </div>
+        <button id="loginBtn" class="primary wide">Entrar</button>
+
+        <p class="muted small" style="margin-top:10px;">
+          Admin pode entrar com login <strong>adm</strong>.
+        </p>
+
+        <div class="auth-switch">
+          <span class="muted small">Não tem conta?</span>
+          <button id="goRegisterBtn" class="link-btn">Criar agora</button>
+        </div>
+      </div>
+
+      <div id="registerPanel" class="hidden">
+        <h1>Criar conta</h1>
+        <div class="field">
+          <label>Nome</label>
+          <input id="regName" type="text" placeholder="Seu nome"/>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input id="regEmail" type="email" placeholder="voce@email.com"/>
+        </div>
+        <div class="field">
+          <label>Senha (mín. 6)</label>
+          <input id="regPass" type="password"/>
+        </div>
+        <button id="registerBtn" class="secondary wide">Cadastrar</button>
+
+        <div class="auth-switch">
+          <span class="muted small">Já tem conta?</span>
+          <button id="goLoginBtn" class="link-btn">Voltar para login</button>
+        </div>
+      </div>
+
+      <p id="authMsg" class="msg"></p>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <main id="appView" class="container hidden">
+
+    <!-- HOME -->
+    <section class="view" id="homeView">
+
+      <div class="cards-row cards-row-3">
+        <div class="card">
+          <div class="card-head">
+            <span>Progresso do Plano</span>
+            <span class="icon">🎯</span>
+          </div>
+          <div class="big" id="progressCount">0/365</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="muted" id="progressPct">0% completo</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Sequência Atual</span>
+            <span class="icon" id="flameIcon">🔥</span>
+          </div>
+          <div class="big" id="streakCount">0 dias</div>
+          <div class="muted" id="streakRecordMini">Recorde: 0 dias</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Nível</span>
+            <span class="icon">⭐</span>
+          </div>
+          <div class="big" id="levelNum">1</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="levelFill"></div>
+          </div>
+          <div class="muted" id="xpText">0 XP total</div>
+        </div>
+      </div>
+
+      <div class="grid-2 home-main">
+        <div class="card">
+          <div class="card-head">
+            <span>Leitura</span>
+            <span class="icon">📖</span>
+          </div>
+
+          <div class="reading-nav">
+            <button id="prevReadingBtn" class="ghost-btn">◀</button>
+            <div class="reading-nav-center">
+              <div id="homeReadingLabel" class="label">Leitura de Hoje</div>
+              <div id="homeReadingSub" class="muted small">—</div>
+            </div>
+            <button id="nextReadingBtn" class="ghost-btn">▶</button>
+          </div>
+
+          <div id="todayBox" class="today-box"></div>
+
+          <button id="markTodayBtn" class="primary wide">Marcar como Lido</button>
+          <p class="muted small" id="todayHint"></p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Versículo do Dia</span>
+            <span class="icon">✨</span>
+          </div>
+
+          <div class="verse-box">
+            <div id="verseText" class="verse-text"></div>
+            <div id="verseRef" class="muted small"></div>
+            <button id="readVerseBtn" class="link-btn">Ler e Ganhar XP</button>
+          </div>
+
+          <div class="pill-row">
+            <span class="pill">📘 10 XP por dia</span>
+            <span class="pill">✨ Versículo: 5 XP</span>
+            <span class="pill" id="streakMultPill">🔥 Multiplicador de sequência: x1.0</span>
+            <span class="pill">🏆 Conquistas dão XP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTAS DO DIA -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head">
+          <span>Notas da Leitura</span>
+          <span class="icon">📝</span>
+        </div>
+
+        <div class="notes-meta">
+          <span class="muted small" id="notesDayLabel">Dia —</span>
+          <span class="muted small" id="notesSavedLabel">—</span>
+        </div>
+
+        <textarea
+          id="dayNotesInput"
+          class="notes-textarea"
+          placeholder="Escreva aqui suas anotações sobre a leitura deste dia..."
+        ></textarea>
+
+        <div class="notes-actions">
+          <button id="saveDayNotesBtn" class="secondary">Salvar Nota</button>
+          <button id="clearDayNotesBtn" class="ghost-btn">Limpar</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PLAN -->
+    <section class="view hidden" id="planView">
+      <div class="card">
+        <div class="card-head">
+          <span id="planTitle">Plano de Leitura</span>
+          <span class="icon">🗂️</span>
+        </div>
+        <div class="plan-tools">
+            <!-- busca por texto (livro, palavra, etc.) -->
+          <input
+            id="planSearch"
+            type="text"
+            placeholder="Buscar por livro ou termo..."
+          />
+
+              <!-- novo: seletor de dia do plano -->
+          <div class="plan-day-picker">
+            <span class="plan-day-icon" title="Ir para um dia do plano">📅</span>
+            <input
+              id="planDayInput"
+              type="number"
+              min="1"
+              max="365"
+              placeholder="Dia"
+            />
+          </div>
+
+          <span class="muted small" id="planMetaHint"></span>
+        </div>
+
+        <div id="planList" class="plan-list"></div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="view hidden" id="statsView">
+
+      <!-- Linha 1 -->
+      <div class="cards-row">
+        <div class="card">
+          <div class="card-head">
+            <span>Previsão de Término</span>
+            <span class="icon">📅</span>
+          </div>
+          <div class="big" id="finishDate">—</div>
+          <div class="muted" id="finishDays">—</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Ritmo de Leitura</span>
+            <span class="icon">⏱️</span>
+          </div>
+          <div class="big" id="avgPerDay">0.00/dia</div>
+          <div class="muted" id="elapsedDays">0 dias desde o início</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Resumo Geral</span>
+            <span class="icon">📊</span>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Dias concluídos</span>
+            <strong id="statsCompleted">0</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">% do plano</span>
+            <strong id="statsPct">0%</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Dias restantes</span>
+            <strong id="statsRemaining">365</strong>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Engajamento</span>
+            <span class="icon">💎</span>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">XP total</span>
+            <strong id="statsXp">0</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Nível</span>
+            <strong id="statsLevel">1</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Leituras concluídas</span>
+            <strong id="statsReads">0</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Versículos lidos</span>
+            <strong id="statsVerses">0</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Multiplicador de sequência</span>
+            <strong id="statsStreakMultiplier">x1.0</strong>
+          </div>
+          <button id="shareBtn" class="ghost-btn wide" style="margin-top:10px;">
+            Compartilhar Progresso
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Visão Geral do Plano</span>
+            <span class="icon">🗺️</span>
+          </div>
+          <p id="macroPlanLine1" class="muted small">
+            Você está no dia 0 de 365.
+          </p>
+          <p id="macroPlanLine2" class="muted small">
+            carregando posição...
+          </p>
+        </div>
+      </div>
+
+      <!-- Linha 2 -->
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="card">
+          <div class="card-head">
+            <span>Sequências</span>
+            <span class="icon">🔥</span>
+          </div>
+          <div class="big" id="statsStreakNow">0 dias</div>
+          <div class="muted" id="statsStreakRecord">Recorde: 0 dias</div>
+          <div class="muted small" id="statsFlameState">—</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Distribuição</span>
+            <span class="icon">🧭</span>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Primeira leitura marcada</span>
+            <strong id="statsFirstDone">—</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Última leitura marcada</span>
+            <strong id="statsLastDone">—</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Maior dia alcançado</span>
+            <strong id="statsMaxDay">—</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Linha 3 -->
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="card">
+          <div class="card-head">
+            <span>Motivação</span>
+            <span class="icon">💪</span>
+          </div>
+
+          <div class="stat-pair">
+            <span class="muted">Melhor sequência histórica</span>
+            <strong id="statsBestStreak">—</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Dias recuperados</span>
+            <strong id="statsRecovered">0</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Horário mais comum de leitura</span>
+            <strong id="statsCommonHour">—</strong>
+          </div>
+
+          <div class="muted small" style="margin-top:8px;">
+            “Dias recuperados” = leituras concluídas após o dia planejado.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span>Ritmo atual vs. necessário</span>
+            <span class="icon">🏁</span>
+          </div>
+
+          <div class="stat-pair">
+            <span class="muted">Ritmo atual (últimos 7 dias)</span>
+            <strong id="statsPace7">0.00/dia</strong>
+          </div>
+          <div class="stat-pair">
+            <span class="muted">Ritmo necessário</span>
+            <strong id="statsPaceNeed">1.00/dia</strong>
+          </div>
+
+          <div class="muted small" id="statsPaceHint" style="margin-top:8px;">
+            —
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel por livro/seção -->
+      <section class="card" style="margin-top:16px;">
+        <div class="card-head">
+          <span>Progresso por Livro/Seção</span>
+          <span class="icon">📚</span>
+        </div>
+        <p class="muted small">
+          Baseado nos dias do plano que mencionam cada livro ou seção.
+        </p>
+
+        <div id="bookProgressPanel" class="book-progress-list">
+          <!-- preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- Linha 4 -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head">
+          <span>Consistência por dia da semana</span>
+          <span class="icon">🗓️</span>
+        </div>
+
+        <div class="stat-pair">
+          <span class="muted">Dom</span>
+          <strong id="statsWDay0">0 (0%)</strong>
+        </div>
+        <div class="stat-pair">
+          <span class="muted">Seg</span>
+          <strong id="statsWDay1">0 (0%)</strong>
+        </div>
+        <div class="stat-pair">
+          <span class="muted">Ter</span>
+          <strong id="statsWDay2">0 (0%)</strong>
+        </div>
+        <div class="stat-pair">
+          <span class="muted">Qua</span>
+          <strong id="statsWDay3">0 (0%)</strong>
+        </div>
+        <div class="stat-pair">
+          <span class="muted">Qui</span>
+          <strong id="statsWDay4">0 (0%)</strong>
+        </div>
+        <div class="stat-pair">
+          <span class="muted">Sex</span>
+          <strong id="statsWDay5">0 (0%)</strong>
+        </div>
+        <div class="stat-pair">
+          <span class="muted">Sáb</span>
+          <strong id="statsWDay6">0 (0%)</strong>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ACHIEVEMENTS -->
+    <section class="view hidden" id="achievementsView">
+      <div class="card">
+        <div class="card-head">
+          <span>Conquistas</span>
+          <span class="icon">🏆</span>
+        </div>
+        <div id="achList" class="ach-list"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view hidden" id="settingsView">
+      <div class="card">
+        <div class="card-head">
+          <span>Configurações</span>
+          <span class="icon">⚙️</span>
+        </div>
+
+        <!-- PLANO -->
+        <div class="plan-picker">
+          <div class="plan-picker-head">
+            <div class="label">Escolha seu plano de leitura</div>
+            <div class="muted small">
+              Você pode trocar quando quiser. Seu progresso por dias marcados permanece.
+            </div>
+          </div>
+
+          <div id="planPickerList" class="plan-picker-list"></div>
+
+          <div class="plan-picker-actions">
+            <button id="savePlanBtn" class="secondary">Salvar Plano</button>
+          </div>
+        </div>
+
+        <!-- IMPORTAR PLANO PERSONALIZADO -->
+        <div class="plan-picker" style="margin-top:14px;">
+          <div class="plan-picker-head">
+            <div class="label">Criar plano personalizado (CSV)</div>
+            <div class="muted small">
+              Importe um plano anual com o formato:
+              <strong>Dia, Antigo Testamento, Salmos/Provérbios, Novo Testamento</strong>.
+              Linhas de mês como <em>- JANEIRO -</em> são aceitas.
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div>
+              <div class="label">Nome do seu plano</div>
+              <div class="muted small">Ex.: “Meu Plano 2026”</div>
+            </div>
+            <input id="customPlanNameInput" type="text" placeholder="Nome do plano"/>
+          </div>
+
+          <div class="settings-row">
+            <div>
+              <div class="label">Arquivo .csv</div>
+              <div class="muted small">Apenas planos anuais formatados corretamente.</div>
+            </div>
+            <input id="customPlanFileInput" type="file" accept=".csv,text/csv"/>
+            <button id="importCustomPlanBtn" class="secondary">Importar</button>
+          </div>
+
+          <div class="muted small" id="customPlanMsg"></div>
+        </div>
+
+        <hr/>
+
+        <!-- START DATE -->
+        <div class="settings-row">
+          <div>
+            <div class="label">Data de início do plano</div>
+            <div class="muted small">Define qual dia do plano corresponde ao calendário real.</div>
+          </div>
+          <input id="startDateInput" type="date"/>
+          <button id="saveStartDateBtn" class="secondary">Salvar</button>
+        </div>
+
+        <!-- THEME -->
+        <div class="settings-row">
+          <div>
+            <div class="label">Modo escuro</div>
+            <div class="muted small">Ativar/desativar tema.</div>
+          </div>
+          <label class="switch">
+            <input id="themeToggle" type="checkbox"/>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <hr/>
+
+        <!-- NOTIFICAÇÕES -->
+        <div class="label" style="margin-bottom:6px;">Notificações inteligentes</div>
+        <div class="muted small" style="margin-bottom:10px;">
+          Funcionam como aviso interno e notificação do navegador enquanto o app estiver aberto.
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="label">Ativar lembretes</div>
+            <div class="muted small">Você recebe um lembrete se ainda não tiver concluído a leitura do dia.</div>
+          </div>
+          <label class="switch">
+            <input id="notifEnabledToggle" type="checkbox"/>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="label">Horário do lembrete</div>
+            <div class="muted small">Ex.: 20:00</div>
+          </div>
+          <input id="notifTimeInput" type="time"/>
+          <button id="saveNotifBtn" class="secondary">Salvar</button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="label">Permissão do navegador</div>
+            <div class="muted small">Necessário para notificação fora do app.</div>
+          </div>
+          <button id="requestNotifPermBtn" class="ghost-btn">Pedir permissão</button>
+        </div>
+
+        <hr/>
+
+        <!-- ADMIN TOOLS -->
+        <div id="adminToolsContainer"></div>
+
+        <!-- RESET -->
+        <div class="settings-row danger">
+          <div>
+            <div class="label">Resetar progresso</div>
+            <div class="muted small">Apaga progresso, XP, conquistas e notas.</div>
+          </div>
+          <button id="resetBtn" class="danger-btn">Resetar</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- NAV INFERIOR (MOBILE) -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-btn nav-btn active" data-view="home">
+      <span class="icon">🏠</span>
+      <span class="label">Início</span>
+    </button>
+    <button class="bottom-nav-btn nav-btn" data-view="plan">
+      <span class="icon">📖</span>
+      <span class="label">Plano</span>
+    </button>
+    <button class="bottom-nav-btn nav-btn" data-view="stats">
+      <span class="icon">📊</span>
+      <span class="label">Stats</span>
+    </button>
+    <button class="bottom-nav-btn nav-btn" data-view="achievements">
+      <span class="icon">🏆</span>
+      <span class="label">Conquistas</span>
+    </button>
+    <button class="bottom-nav-btn nav-btn" data-view="settings">
+      <span class="icon">⚙️</span>
+      <span class="label">Config.</span>
+    </button>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
